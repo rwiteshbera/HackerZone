@@ -39,18 +39,11 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 		// Connect with Database
 		db, err := database.Connect(server)
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusOK)
-			return
-		}
-
-		tx := db.MustBegin()
-		res, err := tx.Exec(database.SignUpQuery, signUpRequest.Email, name[0], name[1], hashedPassword, createdAt, lastLogin)
-		if err != nil {
 			logErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
 
-		err = tx.Commit()
+		res, err := db.Exec(database.SignUpQuery, signUpRequest.Email, name[0], name[1], hashedPassword, createdAt, lastLogin)
 		if err != nil {
 			logErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
@@ -68,7 +61,7 @@ func Login(server *api.Server) gin.HandlerFunc {
 
 // Handle error
 func logErrorWithAbort(context *gin.Context, err error, statusCode int) {
-	context.AbortWithStatusJSON(statusCode, gin.H{"error": err.Error()})
+	context.AbortWithStatusJSON(statusCode, gin.H{"error": err.Error(), "package": "controllers"})
 }
 
 // log a message

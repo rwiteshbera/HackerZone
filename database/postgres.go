@@ -1,16 +1,22 @@
 package database
 
 import (
+	"database/sql"
 	_ "database/sql"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/rwiteshbera/HackZone/api"
+	"time"
 )
 
-func Connect(server *api.Server) (*sqlx.DB, error) {
-	db, err := sqlx.Connect(server.Config.DB_DRIVER, server.Config.DB_CONNECTION_STRING)
+func Connect(server *api.Server) (*sql.DB, error) {
+	db, err := sql.Open(server.Config.DB_DRIVER, server.Config.DB_CONNECTION_STRING)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "package : database")
 	}
+
+	db.SetConnMaxLifetime(time.Minute * 3)
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(5)
 	return db, nil
 }
