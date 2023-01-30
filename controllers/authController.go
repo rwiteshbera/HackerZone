@@ -32,10 +32,16 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 			logErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
-		defer db.Close()
+		defer func(db *sql.DB) {
+			err := db.Close()
+			if err != nil {
+				logErrorWithAbort(context, err, http.StatusInternalServerError)
+			}
+		}(db)
 
 		// Check if user with the requested email already exists
-		if CheckIfUserExists(db, signUpRequest) {
+		_, _, ifExist := CheckIfUserExists(db, signUpRequest.Email)
+		if ifExist {
 			logErrorWithAbort(context, errors.New("user already exists"), http.StatusInternalServerError)
 			return
 		}
@@ -54,21 +60,76 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 
 func Login(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
+		var loginRequest models.LoginUserRequest
+		//var loginResponse models.LoginUserResponse
+
+		// Bind request body into JSON
+		err := context.ShouldBindJSON(&loginRequest)
+		if err != nil {
+			logErrorWithAbort(context, err, http.StatusBadRequest)
+			return
+		}
+
+		// Connect with Database
+		db, err := database.Connect(server)
+		if err != nil {
+			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			return
+		}
+		defer func(db *sql.DB) {
+			err := db.Close()
+			if err != nil {
+				logErrorWithAbort(context, err, http.StatusInternalServerError)
+				return
+			}
+		}(db)
+
+		// Check if user with the request email doesn't exist
+		userEmail, hashedPassword, ifExists := CheckIfUserExists(db, loginRequest.Email)
+		if !ifExists {
+			logErrorWithAbort(context, errors.New("no user found"), http.StatusInternalServerError)
+			return
+		}
+
+		// If user exists
+		// Verify password
+		isValid := utils.VerifyPassword(*hashedPassword, loginRequest.Password)
+		if !isValid {
+			logErrorWithAbort(context, errors.New("incorrect credentials"), http.StatusInternalServerError)
+			return
+		}
+
+		tokenDuration, err := time.ParseDuration(server.Config.ACCESS_TOKEN_DURATION)
+		if err != nil {
+			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			return
+		}
+
+		accessToken, err := server.TokenMaker.CreateToken(*userEmail, tokenDuration)
+		if err != nil {
+			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			return
+		}
+
+		context.JSON(http.StatusOK, gin.H{"access_token": accessToken})
 
 	}
 }
 
-// Check If user with this email already exists or not
-func CheckIfUserExists(db *sql.DB, request models.SignupUserRequest) bool {
-	var email string
-	db.QueryRow(database.CheckIfUserAlreadyExistsQuery, request.Email).Scan(&email)
+// CheckIfUserExists : Check If user with this email already exists or not
+func CheckIfUserExists(db *sql.DB, requestedEmail string) (*string, *string, bool) {
+	var email, password string
+	err := db.QueryRow(database.CheckIfUserAlreadyExistsQuery, requestedEmail).Scan(&email, &password)
+	if err != nil {
+		return nil, nil, false
+	}
 	if email == "" {
-		return false
+		return nil, nil, false
 	}
-	return true
+	return &email, &password, true
 }
 
-// Add user data to database during signup
+// AddUserData : Add user data to database during signup
 func AddUserData(db *sql.DB, request models.SignupUserRequest) error {
 
 	// Split full name into firstname and lastname
