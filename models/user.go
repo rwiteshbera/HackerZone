@@ -3,12 +3,12 @@ package models
 import "time"
 
 type User struct {
+	Email     string    `json:"email"`
 	FirstName string    `json:"firstName"`
 	LastName  string    `json:"lastName"`
-	Email     string    `json:"email"`
 	Password  string    `json:"password"`
-	CreatedAt time.Time `json:"createdAt"`
 	LastLogin time.Time `json:"lastLogin"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type SignupUserRequest struct {
@@ -31,6 +31,9 @@ type LoginUserRequest struct {
 
 type LoginUserResponse struct {
 	AccessToken string    `json:"accessToken"`
+	Email       string    `json:"email"`
+	FirstName   string    `json:"firstName"`
+	LastName    string    `json:"lastName"`
 	LastLogin   time.Time `json:"lastLogin"`
-	User        User      `json:"user"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
