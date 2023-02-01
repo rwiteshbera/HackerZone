@@ -1,4 +1,4 @@
-package controllers
+package participants
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rwiteshbera/HackZone/api"
 	"github.com/rwiteshbera/HackZone/database"
+	"github.com/rwiteshbera/HackZone/middlewares"
 	"github.com/rwiteshbera/HackZone/models"
 	"github.com/rwiteshbera/HackZone/utils"
 	"net/http"
@@ -111,13 +112,14 @@ func Login(server *api.Server) gin.HandlerFunc {
 		}
 
 		var loginResponse = models.LoginUserResponse{
-			AccessToken: accessToken,
-			Email:       userDataResponse.Email,
-			FirstName:   userDataResponse.FirstName,
-			LastName:    userDataResponse.LastName,
-			LastLogin:   userDataResponse.LastLogin,
-			CreatedAt:   userDataResponse.CreatedAt}
+			Email:     userDataResponse.Email,
+			FirstName: userDataResponse.FirstName,
+			LastName:  userDataResponse.LastName,
+			LastLogin: userDataResponse.LastLogin,
+			CreatedAt: userDataResponse.CreatedAt}
 
+		context.SetCookie("authorization", middlewares.AuthorizationTypeBearer+" "+accessToken, 0, "/", server.Config.SERVER_HOST, false, true)
+		context.SetCookie("email", loginResponse.Email, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.JSON(http.StatusOK, gin.H{"message": loginResponse})
 
 	}
@@ -125,8 +127,8 @@ func Login(server *api.Server) gin.HandlerFunc {
 
 // GetUserData : Check If user with this email already exists or not, if exists return all the data
 // return firstname, lastname, email, password, lastLogin, CreatedAt
-func GetUserData(db *sql.DB, requestedEmail string) (*models.User, bool) {
-	var response models.User
+func GetUserData(db *sql.DB, requestedEmail string) (*models.Participant, bool) {
+	var response models.Participant
 	err := db.QueryRow(database.GetUserAllDataQuery, requestedEmail).Scan(&response.Email, &response.FirstName, &response.LastName, &response.Password, &response.LastLogin, &response.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, false

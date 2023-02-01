@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type User struct {
+type Participant struct {
 	Email     string    `json:"email"`
 	FirstName string    `json:"firstName"`
 	LastName  string    `json:"lastName"`
@@ -30,10 +30,9 @@ type LoginUserRequest struct {
 }
 
 type LoginUserResponse struct {
-	AccessToken string    `json:"accessToken"`
-	Email       string    `json:"email"`
-	FirstName   string    `json:"firstName"`
-	LastName    string    `json:"lastName"`
-	LastLogin   time.Time `json:"lastLogin"`
-	CreatedAt   time.Time `json:"createdAt"`
+	Email     string    `json:"email"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	LastLogin time.Time `json:"lastLogin"`
+	CreatedAt time.Time `json:"createdAt"`
 }
