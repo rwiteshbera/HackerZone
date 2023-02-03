@@ -1,8 +1,7 @@
-package participants
+package organizers
 
 import (
 	"database/sql"
-	_ "database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/rwiteshbera/HackZone/api"
@@ -15,7 +14,8 @@ import (
 	"time"
 )
 
-func SignUp(server *api.Server) gin.HandlerFunc {
+// SignUpAsOrganizer : Join as hackathon organizer
+func SignUpAsOrganizer(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var signUpRequest models.SignupRequest
 		//var signUpResponse models.SignupUserResponse
@@ -40,15 +40,15 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 			}
 		}(db)
 
-		// Check if user with the requested email already exists
-		_, isExist := GetUserData(db, signUpRequest.Email)
+		// Check if organizer with the requested email already exists
+		_, isExist := GetOrgData(db, signUpRequest.Email)
 		if isExist {
-			logErrorWithAbort(context, errors.New("user already exists"), http.StatusInternalServerError)
+			logErrorWithAbort(context, errors.New("a person with the same email has already established an organizer account"), http.StatusInternalServerError)
 			return
 		}
 
 		// If user doesn't exist, then add user data
-		err3 := AddUserData(db, signUpRequest)
+		err3 := AddOrganizerData(db, signUpRequest)
 		if err3 != nil {
 			logErrorWithAbort(context, err3, http.StatusInternalServerError)
 			return
@@ -59,7 +59,8 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 	}
 }
 
-func Login(server *api.Server) gin.HandlerFunc {
+// LoginAsOrganizer : Login as a hackathon organizer
+func LoginAsOrganizer(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var loginRequest models.LoginRequest
 
@@ -85,7 +86,7 @@ func Login(server *api.Server) gin.HandlerFunc {
 		}(db)
 
 		// Check if user with the request email doesn't exist
-		userDataResponse, isExist := GetUserData(db, loginRequest.Email)
+		hostDataResponse, isExist := GetOrgData(db, loginRequest.Email)
 		if !isExist {
 			logErrorWithAbort(context, errors.New("no user found"), http.StatusInternalServerError)
 			return
@@ -93,7 +94,7 @@ func Login(server *api.Server) gin.HandlerFunc {
 
 		// If user exists
 		// Verify password
-		isValid := utils.VerifyPassword(userDataResponse.Password, loginRequest.Password)
+		isValid := utils.VerifyPassword(hostDataResponse.Password, loginRequest.Password)
 		if !isValid {
 			logErrorWithAbort(context, errors.New("incorrect credentials"), http.StatusInternalServerError)
 			return
@@ -105,39 +106,38 @@ func Login(server *api.Server) gin.HandlerFunc {
 			return
 		}
 
-		accessToken, err := server.TokenMaker.CreateToken(userDataResponse.Email, tokenDuration)
+		accessToken, err := server.TokenMaker.CreateToken(hostDataResponse.Email, tokenDuration)
 		if err != nil {
 			logErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
 
 		var loginResponse = models.LoginResponse{
-			Email:     userDataResponse.Email,
-			FirstName: userDataResponse.FirstName,
-			LastName:  userDataResponse.LastName,
-			LastLogin: userDataResponse.LastLogin,
-			CreatedAt: userDataResponse.CreatedAt}
+			Email:     hostDataResponse.Email,
+			FirstName: hostDataResponse.FirstName,
+			LastName:  hostDataResponse.LastName,
+			LastLogin: hostDataResponse.LastLogin,
+			CreatedAt: hostDataResponse.CreatedAt}
 
 		context.SetCookie("authorization", middlewares.AuthorizationTypeBearer+" "+accessToken, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.SetCookie("email", loginResponse.Email, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.JSON(http.StatusOK, gin.H{"message": loginResponse})
-
 	}
 }
 
-// GetUserData : Check If user with this email already exists or not, if exists return all the data
+// GetOrgData : Check If organizer with this email already exists or not, if exists return all the data
 // return firstname, lastname, email, password, lastLogin, CreatedAt
-func GetUserData(db *sql.DB, requestedEmail string) (*models.Participant, bool) {
+func GetOrgData(db *sql.DB, requestedEmail string) (*models.Participant, bool) {
 	var response models.Participant
-	err := db.QueryRow(database.GetUserAllDataQuery, requestedEmail).Scan(&response.Email, &response.FirstName, &response.LastName, &response.Password, &response.LastLogin, &response.CreatedAt)
+	err := db.QueryRow(database.GetOrganizersDataQuery, requestedEmail).Scan(&response.Email, &response.FirstName, &response.LastName, &response.Password, &response.LastLogin, &response.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, false
 	}
 	return &response, true
 }
 
-// AddUserData : Add user data to database during signup
-func AddUserData(db *sql.DB, request models.SignupRequest) error {
+// AddOrganizerData : Add user data to database during signup
+func AddOrganizerData(db *sql.DB, request models.SignupRequest) error {
 
 	// Split full name into firstname and lastname
 	name := strings.Split(request.FullName, " ")
@@ -150,7 +150,7 @@ func AddUserData(db *sql.DB, request models.SignupRequest) error {
 	createdAt, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	lastLogin := createdAt
 
-	_, err = db.Exec(database.SignUpQuery, request.Email, name[0], name[1], hashedPassword, lastLogin, createdAt)
+	_, err = db.Exec(database.SignupAsOrganizerQuery, request.Email, name[0], name[1], hashedPassword, lastLogin, createdAt)
 	if err != nil {
 		return err
 	}

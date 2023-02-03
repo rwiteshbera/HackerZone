@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/rwiteshbera/HackZone/api"
 	"github.com/rwiteshbera/HackZone/config"
+	"github.com/rwiteshbera/HackZone/middlewares"
+	"github.com/rwiteshbera/HackZone/routes/organizers"
 	"github.com/rwiteshbera/HackZone/routes/participants"
 	"log"
 )
@@ -23,7 +25,12 @@ func main() {
 	}
 
 	participants.AuthenticationRoutes(Server)
+	organizers.AuthenticationRoutes(Server)
+
+	Server.Router.Use(middlewares.AuthMiddleware(Server))
+
 	participants.DataRoutes(Server)
+	organizers.DataRoutes(Server)
 
 	err = Server.Start(config.SERVER_PORT)
 	if err != nil {

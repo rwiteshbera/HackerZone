@@ -7,8 +7,8 @@ import (
 
 func AuthenticationRoutes(server *api.Server) {
 	// Signup as a participant
-	server.Router.POST("/signup", participants.SignUp(server))
+	server.Router.POST("/signup/user", participants.SignUp(server))
 
 	// Login as a participant
-	server.Router.POST("/login", participants.Login(server))
+	server.Router.POST("/login/user", participants.Login(server))
 }
