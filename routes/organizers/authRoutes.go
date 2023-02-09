@@ -1,8 +1,8 @@
 package organizers
 
 import (
-	"github.com/rwiteshbera/HackZone/api"
-	"github.com/rwiteshbera/HackZone/controllers/organizers"
+	"github.com/rwiteshbera/HackerZone/api"
+	"github.com/rwiteshbera/HackerZone/controllers/organizers"
 )
 
 func AuthenticationRoutes(server *api.Server) {

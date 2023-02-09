@@ -1,8 +1,8 @@
 package participants
 
 import (
-	"github.com/rwiteshbera/HackZone/api"
-	"github.com/rwiteshbera/HackZone/controllers/participants"
+	"github.com/rwiteshbera/HackerZone/api"
+	"github.com/rwiteshbera/HackerZone/controllers/participants"
 )
 
 func AuthenticationRoutes(server *api.Server) {

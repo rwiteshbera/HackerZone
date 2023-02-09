@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/rwiteshbera/HackZone/api"
-	"github.com/rwiteshbera/HackZone/database"
-	"github.com/rwiteshbera/HackZone/models"
+	"github.com/rwiteshbera/HackerZone/api"
+	"github.com/rwiteshbera/HackerZone/database"
+	"github.com/rwiteshbera/HackerZone/models"
 	"net/http"
 )
 

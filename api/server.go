@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"github.com/rwiteshbera/HackZone/config"
-	"github.com/rwiteshbera/HackZone/token"
+	"github.com/rwiteshbera/HackerZone/config"
+	"github.com/rwiteshbera/HackerZone/token"
 	"net/http"
 )
 

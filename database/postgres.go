@@ -5,7 +5,7 @@ import (
 	_ "database/sql"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	"github.com/rwiteshbera/HackZone/api"
+	"github.com/rwiteshbera/HackerZone/api"
 	"time"
 )
 

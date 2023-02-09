@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rwiteshbera/HackZone/api"
+	"github.com/rwiteshbera/HackerZone/api"
 	"net/http"
 	"strings"
 )
