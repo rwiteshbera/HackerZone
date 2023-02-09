@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rwiteshbera/HackZone/api"
 	"github.com/rwiteshbera/HackZone/database"
 	"github.com/rwiteshbera/HackZone/middlewares"
@@ -113,23 +114,26 @@ func LoginAsOrganizer(server *api.Server) gin.HandlerFunc {
 		}
 
 		var loginResponse = models.LoginResponse{
-			Email:     hostDataResponse.Email,
 			FirstName: hostDataResponse.FirstName,
 			LastName:  hostDataResponse.LastName,
+			Email:     hostDataResponse.Email,
+			Bio:       hostDataResponse.Bio,
+			Gender:    hostDataResponse.Gender,
 			LastLogin: hostDataResponse.LastLogin,
 			CreatedAt: hostDataResponse.CreatedAt}
 
 		context.SetCookie("authorization", middlewares.AuthorizationTypeBearer+" "+accessToken, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.SetCookie("email", loginResponse.Email, 0, "/", server.Config.SERVER_HOST, false, true)
+		context.SetCookie("user", hostDataResponse.UUID.String(), 0, "/", server.Config.SERVER_HOST, false, true)
 		context.JSON(http.StatusOK, gin.H{"message": loginResponse})
 	}
 }
 
 // GetOrgData : Check If organizer with this email already exists or not, if exists return all the data
 // return firstname, lastname, email, password, lastLogin, CreatedAt
-func GetOrgData(db *sql.DB, requestedEmail string) (*models.Participant, bool) {
-	var response models.Participant
-	err := db.QueryRow(database.GetOrganizersDataQuery, requestedEmail).Scan(&response.Email, &response.FirstName, &response.LastName, &response.Password, &response.LastLogin, &response.CreatedAt)
+func GetOrgData(db *sql.DB, requestedEmail string) (*models.User, bool) {
+	var response models.User
+	err := db.QueryRow(database.GetOrganizersDataQuery, requestedEmail).Scan(&response.UUID, &response.Email, &response.FirstName, &response.LastName, &response.Bio, &response.Gender, &response.Password, &response.LastLogin, &response.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, false
 	}
@@ -150,7 +154,10 @@ func AddOrganizerData(db *sql.DB, request models.SignupRequest) error {
 	createdAt, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	lastLogin := createdAt
 
-	_, err = db.Exec(database.SignupAsOrganizerQuery, request.Email, name[0], name[1], hashedPassword, lastLogin, createdAt)
+	// Create UUID
+	var uuid_new = uuid.New()
+
+	_, err = db.Exec(database.SignupAsOrganizerQuery, uuid_new, request.Email, name[0], name[1], request.Bio, request.Gender, hashedPassword, lastLogin, createdAt)
 	if err != nil {
 		return err
 	}

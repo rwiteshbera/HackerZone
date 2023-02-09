@@ -5,6 +5,7 @@ import (
 	_ "database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rwiteshbera/HackZone/api"
 	"github.com/rwiteshbera/HackZone/database"
 	"github.com/rwiteshbera/HackZone/middlewares"
@@ -18,7 +19,6 @@ import (
 func SignUp(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var signUpRequest models.SignupRequest
-		//var signUpResponse models.SignupUserResponse
 
 		// Bind Request body into Object
 		err1 := context.ShouldBindJSON(&signUpRequest)
@@ -112,14 +112,17 @@ func Login(server *api.Server) gin.HandlerFunc {
 		}
 
 		var loginResponse = models.LoginResponse{
-			Email:     userDataResponse.Email,
 			FirstName: userDataResponse.FirstName,
 			LastName:  userDataResponse.LastName,
+			Email:     userDataResponse.Email,
+			Bio:       userDataResponse.Bio,
+			Gender:    userDataResponse.Gender,
 			LastLogin: userDataResponse.LastLogin,
 			CreatedAt: userDataResponse.CreatedAt}
 
 		context.SetCookie("authorization", middlewares.AuthorizationTypeBearer+" "+accessToken, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.SetCookie("email", loginResponse.Email, 0, "/", server.Config.SERVER_HOST, false, true)
+		context.SetCookie("user", userDataResponse.UUID.String(), 0, "/", server.Config.SERVER_HOST, false, true)
 		context.JSON(http.StatusOK, gin.H{"message": loginResponse})
 
 	}
@@ -127,9 +130,12 @@ func Login(server *api.Server) gin.HandlerFunc {
 
 // GetUserData : Check If user with this email already exists or not, if exists return all the data
 // return firstname, lastname, email, password, lastLogin, CreatedAt
-func GetUserData(db *sql.DB, requestedEmail string) (*models.Participant, bool) {
-	var response models.Participant
-	err := db.QueryRow(database.GetUserAllDataQuery, requestedEmail).Scan(&response.Email, &response.FirstName, &response.LastName, &response.Password, &response.LastLogin, &response.CreatedAt)
+func GetUserData(db *sql.DB, reqEmail string) (*models.User, bool) {
+	var response models.User
+	err := db.QueryRow(database.GetUserAllDataQuery, reqEmail).Scan(&response.UUID, &response.Email, &response.FirstName, &response.LastName, &response.Bio, &response.Gender, &response.Password, &response.LastLogin, &response.CreatedAt)
+	if err != nil {
+		return nil, false
+	}
 	if err == sql.ErrNoRows {
 		return nil, false
 	}
@@ -142,15 +148,20 @@ func AddUserData(db *sql.DB, request models.SignupRequest) error {
 	// Split full name into firstname and lastname
 	name := strings.Split(request.FullName, " ")
 
+	// Hash the password
 	hashedPassword, err := utils.HashPassword(request.Password)
 	if err != nil {
 		return err
 	}
 
+	// Create UUID
+	var uuid_new = uuid.New()
+
+	// Add time
 	createdAt, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	lastLogin := createdAt
 
-	_, err = db.Exec(database.SignUpQuery, request.Email, name[0], name[1], hashedPassword, lastLogin, createdAt)
+	_, err = db.Exec(database.SignUpQuery, uuid_new, request.Email, name[0], name[1], request.Bio, request.Gender, hashedPassword, lastLogin, createdAt)
 	if err != nil {
 		return err
 	}

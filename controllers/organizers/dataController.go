@@ -40,10 +40,13 @@ func GetOrganizerData(server *api.Server) gin.HandlerFunc {
 			return
 		}
 
-		var organizerDataResponse = &models.Participant{
-			Email:     response.Email,
+		var organizerDataResponse = &models.User{
+			UUID:      response.UUID,
 			FirstName: response.FirstName,
 			LastName:  response.LastName,
+			Email:     response.Email,
+			Bio:       response.Bio,
+			Gender:    response.Gender,
 			LastLogin: response.LastLogin,
 			CreatedAt: response.CreatedAt,
 		}
