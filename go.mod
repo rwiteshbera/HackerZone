@@ -10,7 +10,6 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/o1egl/paseto v1.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/rwiteshbera/HackZone v0.0.0-20230209190949-e091bd5ca915
 	golang.org/x/crypto v0.5.0
 )
 

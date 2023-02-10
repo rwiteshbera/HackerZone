@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-// Create/ Host a new hackathon as an organizer
+// CreateHack : Host a new hackathon as an organizer
 func CreateHack(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var hackathonInfo models.Hackathon
