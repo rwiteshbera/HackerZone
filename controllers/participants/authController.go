@@ -41,7 +41,7 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 		}(db)
 
 		// Check if user with the requested email already exists
-		_, isExist := GetUserData(db, signUpRequest.Email)
+		_, isExist := GetUserDataByEmail(db, signUpRequest.Email)
 		if isExist {
 			logErrorWithAbort(context, errors.New("user already exists"), http.StatusInternalServerError)
 			return
@@ -85,7 +85,7 @@ func Login(server *api.Server) gin.HandlerFunc {
 		}(db)
 
 		// Check if user with the request email doesn't exist
-		userDataResponse, isExist := GetUserData(db, loginRequest.Email)
+		userDataResponse, isExist := GetUserDataByEmail(db, loginRequest.Email)
 		if !isExist {
 			logErrorWithAbort(context, errors.New("no user found"), http.StatusInternalServerError)
 			return
@@ -130,9 +130,9 @@ func Login(server *api.Server) gin.HandlerFunc {
 
 // GetUserData : Check If user with this email already exists or not, if exists return all the data
 // return firstname, lastname, email, password, lastLogin, CreatedAt
-func GetUserData(db *sql.DB, reqEmail string) (*models.User, bool) {
+func GetUserDataByEmail(db *sql.DB, reqEmail string) (*models.User, bool) {
 	var response models.User
-	err := db.QueryRow(database.GetUserAllDataQuery, reqEmail).Scan(&response.UUID, &response.Email, &response.FirstName, &response.LastName, &response.Bio, &response.Gender, &response.Password, &response.LastLogin, &response.CreatedAt)
+	err := db.QueryRow(database.GetUserAllDataByEmailQuery, reqEmail).Scan(&response.UUID, &response.Email, &response.FirstName, &response.LastName, &response.Bio, &response.Gender, &response.Password, &response.LastLogin, &response.CreatedAt)
 	if err != nil {
 		return nil, false
 	}

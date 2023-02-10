@@ -13,7 +13,7 @@ import (
 // GetOrganizerData : Get logged in Hackathon organizer's data
 func GetOrganizerData(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
-		currentEmail, err := context.Cookie("email")
+		currentUserEmail, err := context.Cookie("email")
 		if err != nil {
 			logErrorWithAbort(context, err, http.StatusBadRequest)
 			return
@@ -34,14 +34,13 @@ func GetOrganizerData(server *api.Server) gin.HandlerFunc {
 			}
 		}(db)
 
-		response, isExist := GetOrgData(db, currentEmail)
+		response, isExist := GetOrgDataByEmail(db, currentUserEmail)
 		if !isExist {
 			logErrorWithAbort(context, errors.New("unable to find data"), http.StatusInternalServerError)
 			return
 		}
 
 		var organizerDataResponse = &models.User{
-			UUID:      response.UUID,
 			FirstName: response.FirstName,
 			LastName:  response.LastName,
 			Email:     response.Email,

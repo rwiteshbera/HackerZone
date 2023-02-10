@@ -42,7 +42,7 @@ func SignUpAsOrganizer(server *api.Server) gin.HandlerFunc {
 		}(db)
 
 		// Check if organizer with the requested email already exists
-		_, isExist := GetOrgData(db, signUpRequest.Email)
+		_, isExist := GetOrgDataByEmail(db, signUpRequest.Email)
 		if isExist {
 			logErrorWithAbort(context, errors.New("a person with the same email has already established an organizer account"), http.StatusInternalServerError)
 			return
@@ -87,7 +87,7 @@ func LoginAsOrganizer(server *api.Server) gin.HandlerFunc {
 		}(db)
 
 		// Check if user with the request email doesn't exist
-		hostDataResponse, isExist := GetOrgData(db, loginRequest.Email)
+		hostDataResponse, isExist := GetOrgDataByEmail(db, loginRequest.Email)
 		if !isExist {
 			logErrorWithAbort(context, errors.New("no user found"), http.StatusInternalServerError)
 			return
@@ -131,9 +131,9 @@ func LoginAsOrganizer(server *api.Server) gin.HandlerFunc {
 
 // GetOrgData : Check If organizer with this email already exists or not, if exists return all the data
 // return firstname, lastname, email, password, lastLogin, CreatedAt
-func GetOrgData(db *sql.DB, requestedEmail string) (*models.User, bool) {
+func GetOrgDataByEmail(db *sql.DB, requestedUserUUID string) (*models.User, bool) {
 	var response models.User
-	err := db.QueryRow(database.GetOrganizersDataQuery, requestedEmail).Scan(&response.UUID, &response.Email, &response.FirstName, &response.LastName, &response.Bio, &response.Gender, &response.Password, &response.LastLogin, &response.CreatedAt)
+	err := db.QueryRow(database.GetOrganizersDataByEmailQuery, requestedUserUUID).Scan(&response.UUID, &response.Email, &response.FirstName, &response.LastName, &response.Bio, &response.Gender, &response.Password, &response.LastLogin, &response.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, false
 	}

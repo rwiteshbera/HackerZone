@@ -23,7 +23,7 @@ func NewPayload(username string, duration time.Duration) (*Payload, error) {
 		ID:        tokenId,
 		Username:  username,
 		CreatedAt: time.Now(),
-		ExpiredAt: time.Now().Add(15 * time.Second),
+		ExpiredAt: time.Now().Add(60 * time.Second),
 	}
 
 	return payload, nil

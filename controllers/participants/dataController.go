@@ -34,14 +34,13 @@ func GetParticipantData(server *api.Server) gin.HandlerFunc {
 			}
 		}(db)
 
-		response, isExist := GetUserData(db, currentEmail)
+		response, isExist := GetUserDataByEmail(db, currentEmail)
 		if !isExist {
 			logErrorWithAbort(context, errors.New("unable to find participant"), http.StatusInternalServerError)
 			return
 		}
 
 		var useDataResponse = &models.User{
-			UUID:      response.UUID,
 			FirstName: response.FirstName,
 			LastName:  response.LastName,
 			Email:     response.Email,
