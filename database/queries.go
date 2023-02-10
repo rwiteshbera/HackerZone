@@ -12,6 +12,6 @@ var SignupAsOrganizerQuery = `INSERT INTO Organizers (uuid, email, first_name, l
 var GetOrganizersDataByEmailQuery = `SELECT uuid, email, first_name, last_name, bio, gender, password, last_login, created_at FROM Organizers WHERE email=$1`
 
 // Check hackathon name availability
-var HackathonNameCheckQuery = `SELECT * FROM Hackathons WHERE name=$1`
+var HackathonNameCheckQuery = `SELECT id FROM Hackathons WHERE name=$1`
 var CreateHackathonQuery = `INSERT INTO Hackathons (name, tagline, description, contact_email, host, hacking_start, deadline,
 created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`

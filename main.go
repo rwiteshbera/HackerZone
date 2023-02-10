@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/rwiteshbera/HackZone/api"
-	"github.com/rwiteshbera/HackZone/config"
-	"github.com/rwiteshbera/HackZone/middlewares"
-	"github.com/rwiteshbera/HackZone/routes/organizers"
-	"github.com/rwiteshbera/HackZone/routes/participants"
+	"github.com/rwiteshbera/HackerZone/api"
+	"github.com/rwiteshbera/HackerZone/config"
+	"github.com/rwiteshbera/HackerZone/middlewares"
+	"github.com/rwiteshbera/HackerZone/routes/organizers"
+	"github.com/rwiteshbera/HackerZone/routes/participants"
 	"log"
 )
 
@@ -31,6 +31,7 @@ func main() {
 
 	participants.DataRoutes(Server)
 	organizers.DataRoutes(Server)
+	organizers.HackathonRoutes(Server)
 
 	err = Server.Start(config.SERVER_PORT)
 	if err != nil {

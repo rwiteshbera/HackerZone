@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rwiteshbera/HackerZone/api"
+	"github.com/rwiteshbera/HackerZone/controllers"
 	"github.com/rwiteshbera/HackerZone/database"
 	"github.com/rwiteshbera/HackerZone/middlewares"
 	"github.com/rwiteshbera/HackerZone/models"
@@ -23,39 +24,38 @@ func SignUp(server *api.Server) gin.HandlerFunc {
 		// Bind Request body into Object
 		err1 := context.ShouldBindJSON(&signUpRequest)
 		if err1 != nil {
-			logErrorWithAbort(context, err1, http.StatusBadRequest)
+			controllers.LogErrorWithAbort(context, err1, http.StatusBadRequest)
 			return
 		}
 
 		// Connect with Database
 		db, err2 := database.Connect(server)
 		if err2 != nil {
-			logErrorWithAbort(context, err2, http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, err2, http.StatusInternalServerError)
 			return
 		}
 		defer func(db *sql.DB) {
 			err := db.Close()
 			if err != nil {
-				logErrorWithAbort(context, err, http.StatusInternalServerError)
+				controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 			}
 		}(db)
 
 		// Check if user with the requested email already exists
 		_, isExist := GetUserDataByEmail(db, signUpRequest.Email)
 		if isExist {
-			logErrorWithAbort(context, errors.New("user already exists"), http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, errors.New("user already exists"), http.StatusInternalServerError)
 			return
 		}
 
 		// If user doesn't exist, then add user data
 		err3 := AddUserData(db, signUpRequest)
 		if err3 != nil {
-			logErrorWithAbort(context, err3, http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, err3, http.StatusInternalServerError)
 			return
 		}
 
-		context.JSON(http.StatusOK, gin.H{"message": "registration successful"})
-
+		controllers.SendResponse(context, "registration successful")
 	}
 }
 
@@ -66,20 +66,20 @@ func Login(server *api.Server) gin.HandlerFunc {
 		// Bind request body into JSON
 		err := context.ShouldBindJSON(&loginRequest)
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusBadRequest)
+			controllers.LogErrorWithAbort(context, err, http.StatusBadRequest)
 			return
 		}
 
 		// Connect with Database
 		db, err := database.Connect(server)
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
 		defer func(db *sql.DB) {
 			err := db.Close()
 			if err != nil {
-				logErrorWithAbort(context, err, http.StatusInternalServerError)
+				controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 				return
 			}
 		}(db)
@@ -87,7 +87,7 @@ func Login(server *api.Server) gin.HandlerFunc {
 		// Check if user with the request email doesn't exist
 		userDataResponse, isExist := GetUserDataByEmail(db, loginRequest.Email)
 		if !isExist {
-			logErrorWithAbort(context, errors.New("no user found"), http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, errors.New("no user found"), http.StatusInternalServerError)
 			return
 		}
 
@@ -95,19 +95,19 @@ func Login(server *api.Server) gin.HandlerFunc {
 		// Verify password
 		isValid := utils.VerifyPassword(userDataResponse.Password, loginRequest.Password)
 		if !isValid {
-			logErrorWithAbort(context, errors.New("incorrect credentials"), http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, errors.New("incorrect credentials"), http.StatusInternalServerError)
 			return
 		}
 
 		tokenDuration, err := time.ParseDuration(server.Config.ACCESS_TOKEN_DURATION)
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
 
 		accessToken, err := server.TokenMaker.CreateToken(userDataResponse.Email, tokenDuration)
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -123,7 +123,8 @@ func Login(server *api.Server) gin.HandlerFunc {
 		context.SetCookie("authorization", middlewares.AuthorizationTypeBearer+" "+accessToken, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.SetCookie("email", loginResponse.Email, 0, "/", server.Config.SERVER_HOST, false, true)
 		context.SetCookie("user", userDataResponse.UUID.String(), 0, "/", server.Config.SERVER_HOST, false, true)
-		context.JSON(http.StatusOK, gin.H{"message": loginResponse})
+
+		controllers.SendResponse(context, loginResponse)
 
 	}
 }
@@ -166,14 +167,4 @@ func AddUserData(db *sql.DB, request models.SignupRequest) error {
 		return err
 	}
 	return nil
-}
-
-// Handle error
-func logErrorWithAbort(context *gin.Context, err error, statusCode int) {
-	context.AbortWithStatusJSON(statusCode, gin.H{"error": err.Error(), "package": "controllers"})
-}
-
-// log a message
-func logMessage(context *gin.Context, message any) {
-	context.JSON(http.StatusOK, gin.H{"message": message})
 }

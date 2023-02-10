@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/rwiteshbera/HackerZone/api"
+	"github.com/rwiteshbera/HackerZone/controllers"
 	"github.com/rwiteshbera/HackerZone/database"
 	"github.com/rwiteshbera/HackerZone/models"
 	"net/http"
@@ -15,28 +16,28 @@ func GetOrganizerData(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		currentUserEmail, err := context.Cookie("email")
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusBadRequest)
+			controllers.LogErrorWithAbort(context, err, http.StatusBadRequest)
 			return
 		}
 
 		// Connect with Database
 		db, err := database.Connect(server)
 		if err != nil {
-			logErrorWithAbort(context, err, http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 			return
 		}
 
 		defer func(db *sql.DB) {
 			err := db.Close()
 			if err != nil {
-				logErrorWithAbort(context, err, http.StatusInternalServerError)
+				controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
 				return
 			}
 		}(db)
 
 		response, isExist := GetOrgDataByEmail(db, currentUserEmail)
 		if !isExist {
-			logErrorWithAbort(context, errors.New("unable to find data"), http.StatusInternalServerError)
+			controllers.LogErrorWithAbort(context, errors.New("unable to find data"), http.StatusInternalServerError)
 			return
 		}
 
@@ -50,6 +51,6 @@ func GetOrganizerData(server *api.Server) gin.HandlerFunc {
 			CreatedAt: response.CreatedAt,
 		}
 
-		context.JSON(http.StatusOK, gin.H{"message": organizerDataResponse})
+		controllers.SendResponse(context, organizerDataResponse)
 	}
 }
