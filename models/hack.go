@@ -12,6 +12,7 @@ type Hackathon struct {
 	HackingStart string `json:"hackingStart"`
 	Deadline     string `json:"deadline"`
 	CreatedBy    string `json:"createdBy"`
+	TeamName     string `json:"teamName"`
 }
 
 type Team struct {

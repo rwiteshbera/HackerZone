@@ -27,3 +27,8 @@ var InsertMemberInTeamQuery = `INSERT INTO Team_Members (team_id, email, hackath
 
 // Delete Member from Team
 var DeleteMemberQuery = `DELETE FROM Team_Members WHERE team_id = $1 AND email = $2`
+
+// Get Joined Hackathon Data and Team Name
+var GetJoinedHackDataQuery = `SELECT hackathons.id, hackathons.name, hackathons.tagline, hackathons.description, hackathons.host,
+  hackathons.hacking_start, hackathons.deadline, Teams.name FROM hackathons JOIN Teams ON Hackathons.id = Teams.hackathon_id
+WHERE Teams.created_by = $1`

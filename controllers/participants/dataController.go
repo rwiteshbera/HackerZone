@@ -241,9 +241,47 @@ func DeleteMemberFromTeam(server *api.Server) gin.HandlerFunc {
 	}
 }
 
-// Get all team name you are a member
-func GetAllTeamData(server *api.Server) gin.HandlerFunc {
+// GetJoinedHackathonData : Get all team name and hackathon data you have registered
+func GetJoinedHackathonData(server *api.Server) gin.HandlerFunc {
 	return func(context *gin.Context) {
+		var joinedHackathonInfo []models.Hackathon
 
+		loggedInUserUUID, err := context.Cookie("user")
+		if err != nil {
+			controllers.LogErrorWithAbort(context, err, http.StatusBadRequest)
+			return
+		}
+
+		// Connect with Database
+		db, err2 := database.Connect(server)
+		if err2 != nil {
+			controllers.LogErrorWithAbort(context, err2, http.StatusInternalServerError)
+			return
+		}
+		defer func(db *sql.DB) {
+			err := db.Close()
+			if err != nil {
+				controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
+				return
+			}
+		}(db)
+
+		rows, err3 := db.Query(database.GetJoinedHackDataQuery, loggedInUserUUID)
+		for rows.Next() {
+			var rowData models.Hackathon
+			err3 = rows.Scan(&rowData.Id, &rowData.Name, &rowData.Tagline, &rowData.Description, &rowData.Host,
+				&rowData.HackingStart, &rowData.Deadline, &rowData.TeamName)
+			if err3 != nil {
+				controllers.LogErrorWithAbort(context, err, http.StatusInternalServerError)
+				return
+			}
+			joinedHackathonInfo = append(joinedHackathonInfo, rowData)
+		}
+		if err3 != nil {
+			controllers.LogErrorWithAbort(context, err3, http.StatusInternalServerError)
+			return
+		}
+
+		controllers.SendResponse(context, joinedHackathonInfo)
 	}
 }
